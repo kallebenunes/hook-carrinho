@@ -4,6 +4,9 @@ import {
   MdAddCircleOutline,
   MdRemoveCircleOutline,
 } from 'react-icons/md';
+import { format } from 'util';
+import { useCart } from '../../hooks/useCart';
+import { formatPrice } from '../../util/format';
 
 // import { useCart } from '../../hooks/useCart';
 // import { formatPrice } from '../../util/format';
@@ -18,11 +21,18 @@ interface Product {
 }
 
 const Cart = (): JSX.Element => {
-  // const { cart, removeProduct, updateProductAmount } = useCart();
+  const { cart } = useCart();
 
-  // const cartFormatted = cart.map(product => ({
-  //   // TODO
-  // }))
+  const cartFormatted = {
+    products: cart.map(product => ({
+      ...product,
+      priceFormatted: formatPrice(product.price),
+      subtotal: formatPrice(cart.length > 0 ?  cart.reduce((acc, product) => product.price * product.amount , 0) : 0)
+    })),
+    subtotal: cart.length > 0 ?  cart.reduce((acc, product) => product.price * product.amount , 0) : 0
+  }
+
+  console.log(cartFormatted)
   // const total =
   //   formatPrice(
   //     cart.reduce((sumTotal, product) => {
@@ -55,6 +65,54 @@ const Cart = (): JSX.Element => {
           </tr>
         </thead>
         <tbody>
+          {cartFormatted.products.map(product => (
+            <tr data-testid="product">
+              <td>
+                <img src={product.image} alt="" />
+              </td>
+              <td>
+                <strong>{product.title}</strong>
+                <span>{(product.priceFormatted)}</span>
+              </td>
+              <td>
+              <div>
+                <button
+                  type="button"
+                  data-testid="decrement-product"
+                // disabled={product.amount <= 1}
+                // onClick={() => handleProductDecrement()}
+                >
+                  <MdRemoveCircleOutline size={20} />
+                </button>
+                <input
+                  type="text"
+                  data-testid="product-amount"
+                  readOnly
+                  value={2}
+                />
+                <button
+                  type="button"
+                  data-testid="increment-product"
+                // onClick={() => handleProductIncrement()}
+                >
+                  <MdAddCircleOutline size={20} />
+                </button>
+              </div>
+              </td>
+              <td>
+                <strong>{product.subtotal}</strong>
+              </td>
+              <td>
+              <button
+                type="button"
+                data-testid="remove-product"
+              // onClick={() => handleRemoveProduct(product.id)}
+              >
+                <MdDelete size={20} />
+              </button>
+            </td>
+            </tr>
+          ))}
           <tr data-testid="product">
             <td>
               <img src="https://rocketseat-cdn.s3-sa-east-1.amazonaws.com/modulo-redux/tenis1.jpg" alt="Tênis de Caminhada Leve Confortável" />
