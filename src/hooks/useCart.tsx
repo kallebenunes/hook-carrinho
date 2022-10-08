@@ -2,7 +2,7 @@ import { createContext, ReactNode, useContext, useState, useEffect } from 'react
 import { toast } from 'react-toastify';
 import { api } from '../services/api';
 import { Product, Stock } from '../types';
-
+import produce from 'immer'
 interface CartProviderProps {
   children: ReactNode;
 }
@@ -25,11 +25,9 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
   const [cart, setCart] = useState<Product[]>(() => {
     const storagedCart = localStorage.getItem('@RocketShoes:cart')
     
-
     if (storagedCart) {
       return JSON.parse(storagedCart);
     }
-
     return []; 
   });
 
@@ -43,26 +41,34 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
   useEffect(() => {
     loadStock()
   }, [])
+
+  useEffect(() => {
+    localStorage.setItem('@RocketShoes:cart', JSON.stringify(cart))
+  }, [cart])
   
   const addProduct = async (productId: number, product: Product) => {
-
 
     try {
       const productStock = stock.find(stock => productId === stock.id)
       const isAmountAvailable = productStock && productStock?.amount >= 1
       if(isAmountAvailable){
         setCart([...cart, product])
+        
       }
     } catch(error) {
       toast.error('Erro na adição do produto');
     }
   };
 
-  const removeProduct = (productId: number) => {
+  const removeProduct = (productId: number) => {   
     try {
-      // TODO
-    } catch {
-      // TODO
+      setCart(produce(cart, draft => {
+        const productIndex = draft.findIndex(product => product.id === productId)
+
+        draft.splice(productIndex,1)
+      }))
+    } catch(err) {
+      console.log(err)
     }
   };
 
@@ -71,7 +77,19 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
     amount,
   }: UpdateProductAmount) => {
     try {
-      // TODO
+      setCart(produce(cart,(draft)=> {
+        let productIndex = -1
+        const product = draft.find((product, index) => {
+          productIndex = index
+          return product.id === productId
+        })
+        const newProduct: Product = {
+          ...product,
+          amount
+        } as Product
+        draft.splice(productIndex, 1, newProduct)
+        
+      }))
     } catch {
       // TODO
     }

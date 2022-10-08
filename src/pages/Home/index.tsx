@@ -5,13 +5,8 @@ import { ProductList } from './styles';
 import { api } from '../../services/api';
 import { formatPrice } from '../../util/format';
 import { useCart } from '../../hooks/useCart';
+import { Product } from './../../types';
 
-interface Product {
-  id: number;
-  title: string;
-  price: number;
-  image: string;
-}
 
 interface ProductFormatted extends Product {
   priceFormatted: string;
@@ -23,24 +18,33 @@ interface CartItemsAmount {
 
 const Home = (): JSX.Element => {
   const [products, setProducts] = useState<ProductFormatted[]>([]);
-  const { addProduct, cart } = useCart();
+  const [cartItemsAmount, setcartItemsAmount] = useState<CartItemsAmount>({})
+  const { addProduct, cart, updateProductAmount } = useCart();
 
   // const cartItemsAmount = cart.reduce((sumAmount, product) => {
   //   // TODO
   // }, {} as CartItemsAmount)
+
+  function loadCartItemsAmount(cart: Product[]){
+    let itemsAmount: CartItemsAmount = {}
+    cart.forEach(product => itemsAmount[product.id] = product.amount  )
+    setcartItemsAmount(itemsAmount)
+  }
 
   useEffect(() => {
     async function loadProducts() {
       // TODO
       const { data }   = await api.get<Product[]>("/products")
       
+      
 
-      const productFormattedList = data.map(({id, image, price, title}) => {
+      const productFormattedList = data.map(({id, image, price, title, amount}) => {
         const productFormatted: ProductFormatted = {
           id, 
           image, 
           price, 
           title,
+          amount,
           priceFormatted: formatPrice(price)
         }
 
@@ -52,12 +56,26 @@ const Home = (): JSX.Element => {
 
     loadProducts();
   }, []);
-
+  useEffect(() => {
+    loadCartItemsAmount(cart)
+  }, [cart])
   function handleAddProduct(id: number) {
     // TODO
-    const {id: prodcutId, image, price, title  } = products.find(product => product.id === id) as ProductFormatted
+    let productOnCart = cart.find(product => product.id === id)
+
+    if(productOnCart){
+      
+      updateProductAmount({
+        productId: id,
+        amount: productOnCart.amount + 1
+      })
+
+      return
+    }
+
+    const {id: productId, image, price, title  } = products.find(product => product.id === id) as ProductFormatted
     const product = {
-      id: prodcutId,
+      id: productId,
       title, 
       image,
       price, 
@@ -89,7 +107,7 @@ const Home = (): JSX.Element => {
             >
               <div data-testid="cart-product-quantity">
                 <MdAddShoppingCart size={16} color="#FFF" />
-                {/* {cartItemsAmount[id] || 0} */} 2
+                {cartItemsAmount[id] || 0} 
               </div>
 
               <span>ADICIONAR AO CARRINHO</span>
@@ -102,3 +120,4 @@ const Home = (): JSX.Element => {
 };
 
 export default Home;
+

@@ -11,6 +11,7 @@ import { formatPrice } from '../../util/format';
 // import { useCart } from '../../hooks/useCart';
 // import { formatPrice } from '../../util/format';
 import { Container, ProductTable, Total } from './styles';
+import { toast } from 'react-toastify';
 
 interface Product {
   id: number;
@@ -21,7 +22,7 @@ interface Product {
 }
 
 const Cart = (): JSX.Element => {
-  const { cart } = useCart();
+  const { cart, removeProduct, updateProductAmount } = useCart();
 
   const cartFormatted = {
     products: cart.map(product => ({
@@ -32,7 +33,6 @@ const Cart = (): JSX.Element => {
     subtotal: cart.length > 0 ?  cart.reduce((acc, product) => product.price * product.amount , 0) : 0
   }
 
-  console.log(cartFormatted)
   // const total =
   //   formatPrice(
   //     cart.reduce((sumTotal, product) => {
@@ -42,14 +42,30 @@ const Cart = (): JSX.Element => {
 
   function handleProductIncrement(product: Product) {
     // TODO
+    updateProductAmount({
+      productId: product.id,
+      amount: product.amount + 1
+    })
   }
-
+  
   function handleProductDecrement(product: Product) {
+    if(product.amount === 1){
+      toast.error("Não é possível diminuir a quantidade")
+      return
+    }
+    updateProductAmount({
+      productId: product.id,
+      amount: product.amount - 1
+    })
+
     // TODO
   }
 
   function handleRemoveProduct(productId: number) {
     // TODO
+    console.log("Remove product")
+    removeProduct(productId)
+
   }
 
   return (
@@ -80,7 +96,7 @@ const Cart = (): JSX.Element => {
                   type="button"
                   data-testid="decrement-product"
                 // disabled={product.amount <= 1}
-                // onClick={() => handleProductDecrement()}
+                onClick={() => handleProductDecrement(product)}
                 >
                   <MdRemoveCircleOutline size={20} />
                 </button>
@@ -88,12 +104,12 @@ const Cart = (): JSX.Element => {
                   type="text"
                   data-testid="product-amount"
                   readOnly
-                  value={2}
+                  value={product.amount}
                 />
                 <button
                   type="button"
                   data-testid="increment-product"
-                // onClick={() => handleProductIncrement()}
+                onClick={() => handleProductIncrement(product)}
                 >
                   <MdAddCircleOutline size={20} />
                 </button>
@@ -106,7 +122,7 @@ const Cart = (): JSX.Element => {
               <button
                 type="button"
                 data-testid="remove-product"
-              // onClick={() => handleRemoveProduct(product.id)}
+                onClick={() => handleRemoveProduct(product.id)}
               >
                 <MdDelete size={20} />
               </button>
